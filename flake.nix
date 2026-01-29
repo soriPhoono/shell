@@ -41,7 +41,11 @@
         ];
         systems = import inputs.systems;
         agenix-shell.secrets = (import ./secrets.nix).agenix-shell-secrets;
-        perSystem = args @ {system, ...}: let
+        perSystem = {
+          self',
+          system,
+          ...
+        } @ args: let
           pkgs = import nixpkgs {
             inherit system;
             overlays = [
@@ -52,6 +56,13 @@
             config.allowUnfree = true;
           };
         in {
+          packages.default = pkgs.writeShellScriptBin "hello" "echo hello";
+          apps.default = {
+            type = "app";
+            meta.description = "Hello app";
+            program = "${pkgs.lib.getExe self'.packages.default}";
+          };
+
           devShells.default = import ./shell.nix (args
             // {
               inherit pkgs;
